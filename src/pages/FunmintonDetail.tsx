@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import type { Session, Participant } from '../types';
 import { formatCurrency, formatDate } from '../utils/format';
-import { Check, X, Copy, ExternalLink, Image as ImageIcon, Trash2, Plus } from 'lucide-react';
+import { Check, X, Copy, Image as ImageIcon, Trash2, Plus } from 'lucide-react';
 import CurrencyInput from '../components/CurrencyInput';
 
 export default function FunmintonDetail() {

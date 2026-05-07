@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, MapPin, Users, Calendar, CheckCircle2, CircleDashed, Copy, Check } from 'lucide-react';
+import { Plus, MapPin, Users, Copy, Check } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Session } from '../types';
-import { formatDate, formatCurrency } from '../utils/format';
+import { formatDate } from '../utils/format';
 import CurrencyInput from '../components/CurrencyInput';
 
 export default function Funminton() {

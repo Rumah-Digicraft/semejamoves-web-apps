@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock, Dumbbell, Trophy, Circle, Wallet, TrendingUp, CalendarDays } from 'lucide-react';
+import { Lock, Dumbbell, Trophy, Circle, TrendingUp, CalendarDays, Activity } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { SportConfig } from '../types';
 import { formatCurrency } from '../utils/format';
