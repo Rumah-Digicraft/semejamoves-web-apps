@@ -67,7 +67,7 @@ export default function Funminton() {
   };
 
   const copyLink = (token: string) => {
-    const link = `${window.location.origin}/moves/f/${token}`;
+    const link = `${window.location.origin}/f/${token}`;
     navigator.clipboard.writeText(link);
     setCopiedToken(token);
     setTimeout(() => setCopiedToken(null), 2000);

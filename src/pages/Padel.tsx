@@ -66,7 +66,7 @@ export default function Padel() {
   };
 
   const copyLink = (token: string) => {
-    const link = `${window.location.origin}/moves/p/${token}`;
+    const link = `${window.location.origin}/p/${token}`;
     navigator.clipboard.writeText(link);
     setCopiedToken(token);
     setTimeout(() => setCopiedToken(null), 2000);
