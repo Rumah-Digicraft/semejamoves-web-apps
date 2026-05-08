@@ -20,7 +20,6 @@ export default function PublicFunminton() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [kritikSaran, setKritikSaran] = useState('');
-  const [pollingHari, setPollingHari] = useState<'jumat_malam' | 'sabtu_pagi' | ''>('');
 
   useEffect(() => {
     async function loadData() {
@@ -44,7 +43,7 @@ export default function PublicFunminton() {
         .from('participants')
         .select('*')
         .eq('session_id', sessionData.id)
-        .eq('payment_status', 'pending');
+        .neq('payment_status', 'approved');
         
       if (pData) setParticipants(pData);
       setLoading(false);
@@ -63,7 +62,7 @@ export default function PublicFunminton() {
     reader.onerror = error => reject(error);
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: { preventDefault(): void }) => {
     e.preventDefault();
     if (selectedIds.length === 0 || !file || !session) {
       setErrorMsg('Pilih nama dan upload bukti pembayaran.');
@@ -131,7 +130,7 @@ export default function PublicFunminton() {
         ocr_match: true,
         submitted_at: new Date().toISOString(),
         kritik_saran: kritikSaran || null,
-        polling_hari: pollingHari || null
+        polling_hari: null
       }));
 
       for (const update of updates) {
@@ -253,24 +252,11 @@ export default function PublicFunminton() {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Minggu depan mau minton kapan?</label>
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="radio" name="polling_hari" value="jumat_malam"
-                  checked={pollingHari === 'jumat_malam'}
-                  onChange={() => setPollingHari('jumat_malam')}
-                  className="accent-primary-green w-4 h-4" />
-                <span className="text-sm text-gray-700">Jumat Malam</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="radio" name="polling_hari" value="sabtu_pagi"
-                  checked={pollingHari === 'sabtu_pagi'}
-                  onChange={() => setPollingHari('sabtu_pagi')}
-                  className="accent-primary-green w-4 h-4" />
-                <span className="text-sm text-gray-700">Sabtu Pagi</span>
-              </label>
-            </div>
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-4">
+            <p className="text-xs font-semibold text-green-600 uppercase tracking-wide mb-1">📢 Next Session</p>
+            <p className="text-base font-bold text-gray-900">Funminton Malam Minggu 🏸✨</p>
+            <p className="text-sm text-gray-600 mt-0.5">Sabtu, 16 Mei 2026</p>
+            <p className="text-xs text-green-700 mt-2 font-medium">no cap minggu depan kita minton lagi bestie, jangan ghosting ya fr fr 🔥</p>
           </div>
 
           <div>
