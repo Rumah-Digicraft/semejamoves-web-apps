@@ -189,7 +189,7 @@ export default function Padel() {
                         className="w-32 flex-shrink-0 px-3 py-2 border rounded-xl text-sm"
                         value={slot.time} onChange={e => updateSlot(i, 'time', e.target.value)} />
                       <input type="text" placeholder="Court 2 - Black Mamba"
-                        className="flex-1 px-3 py-2 border rounded-xl text-sm"
+                        className="min-w-0 flex-1 px-3 py-2 border rounded-xl text-sm"
                         value={slot.courts} onChange={e => updateSlot(i, 'courts', e.target.value)} />
                       {sessionSlots.length > 1 && (
                         <button type="button" onClick={() => removeSlot(i)}
