@@ -320,46 +320,98 @@ export default function FunmintonDetail() {
         </div>
       )}
 
-      {activeTab === 'ringkasan' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-            <h3 className="font-bold text-gray-900 mb-4">Statistik Kehadiran</h3>
-            <div className="flex justify-between items-center py-2 border-b border-gray-100 text-sm">
-              <span className="text-gray-500">Total Terdaftar</span>
-              <span className="font-medium text-gray-900">{participants.length} orang</span>
-            </div>
-            <div className="flex justify-between items-center py-2 text-sm">
-              <span className="text-gray-500">Total Hadir</span>
-              <span className="font-medium text-gray-900">{participants.filter(p => p.attended).length} orang</span>
-            </div>
-          </div>
+      {activeTab === 'ringkasan' && (() => {
+        const jumatCount = participants.filter(p => p.polling_hari === 'jumat_malam').length;
+        const sabtuCount = participants.filter(p => p.polling_hari === 'sabtu_pagi').length;
+        const totalVotes = jumatCount + sabtuCount;
+        const saranList = participants.filter(p => p.kritik_saran);
 
-          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-gray-900">Ringkasan Keuangan</h3>
-              <button onClick={() => setIsEditCostModalOpen(true)} className="text-xs text-primary-purple hover:underline font-medium">Edit Biaya / Nambah Jam</button>
-            </div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-100 text-sm">
-              <span className="text-gray-500">Total Pemasukan (Approved)</span>
-              <span className="font-medium text-green-600">{formatCurrency(totalIncome)}</span>
-            </div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-100 text-sm">
-              <span className="text-gray-500">Sewa Lapangan</span>
-              <span className="font-medium text-red-600">-{formatCurrency(session.court_cost)}</span>
-            </div>
-            {getParsedOtherCosts(session).map((cost: any, idx: number) => (
-              <div key={idx} className="flex justify-between items-center py-2 border-b border-gray-100 text-sm">
-                <span className="text-gray-500">Biaya Lain: {cost.desc || '-'}</span>
-                <span className="font-medium text-red-600">-{formatCurrency(cost.amount)}</span>
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+              <h3 className="font-bold text-gray-900 mb-4">Statistik Kehadiran</h3>
+              <div className="flex justify-between items-center py-2 border-b border-gray-100 text-sm">
+                <span className="text-gray-500">Total Terdaftar</span>
+                <span className="font-medium text-gray-900">{participants.length} orang</span>
               </div>
-            ))}
-            <div className="flex justify-between items-center pt-4 mt-2 border-t border-gray-200 text-base font-bold">
-              <span className="text-gray-900">Profit / Rugi</span>
-              <span className={profit >= 0 ? 'text-primary-green' : 'text-red-600'}>{formatCurrency(profit)}</span>
+              <div className="flex justify-between items-center py-2 text-sm">
+                <span className="text-gray-500">Total Hadir</span>
+                <span className="font-medium text-gray-900">{participants.filter(p => p.attended).length} orang</span>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold text-gray-900">Ringkasan Keuangan</h3>
+                <button onClick={() => setIsEditCostModalOpen(true)} className="text-xs text-primary-purple hover:underline font-medium">Edit Biaya / Nambah Jam</button>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-100 text-sm">
+                <span className="text-gray-500">Total Pemasukan (Approved)</span>
+                <span className="font-medium text-green-600">{formatCurrency(totalIncome)}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-100 text-sm">
+                <span className="text-gray-500">Sewa Lapangan</span>
+                <span className="font-medium text-red-600">-{formatCurrency(session.court_cost)}</span>
+              </div>
+              {getParsedOtherCosts(session).map((cost: any, idx: number) => (
+                <div key={idx} className="flex justify-between items-center py-2 border-b border-gray-100 text-sm">
+                  <span className="text-gray-500">Biaya Lain: {cost.desc || '-'}</span>
+                  <span className="font-medium text-red-600">-{formatCurrency(cost.amount)}</span>
+                </div>
+              ))}
+              <div className="flex justify-between items-center pt-4 mt-2 border-t border-gray-200 text-base font-bold">
+                <span className="text-gray-900">Profit / Rugi</span>
+                <span className={profit >= 0 ? 'text-primary-green' : 'text-red-600'}>{formatCurrency(profit)}</span>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+              <h3 className="font-bold text-gray-900 mb-4">Polling — Minggu Depan Kapan?</h3>
+              {totalVotes === 0 ? (
+                <p className="text-sm text-gray-400 italic">Belum ada yang vote.</p>
+              ) : (
+                <div className="space-y-3">
+                  {[
+                    { label: 'Jumat Malam', count: jumatCount },
+                    { label: 'Sabtu Pagi', count: sabtuCount }
+                  ].map(({ label, count }) => {
+                    const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+                    return (
+                      <div key={label}>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="text-gray-700 font-medium">{label}</span>
+                          <span className="text-gray-500">{count} vote ({pct}%)</span>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-2.5">
+                          <div className="bg-primary-green h-2.5 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <p className="text-xs text-gray-400 pt-1">{totalVotes} dari {participants.length} peserta sudah vote</p>
+                </div>
+              )}
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+              <h3 className="font-bold text-gray-900 mb-4">Kritik & Saran</h3>
+              {saranList.length === 0 ? (
+                <p className="text-sm text-gray-400 italic">Belum ada saran masuk.</p>
+              ) : (
+                <div className="space-y-3 max-h-60 overflow-y-auto">
+                  {saranList.map(p => (
+                    <div key={p.id} className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                      <p className="text-xs font-semibold text-gray-500 mb-1">{p.name}</p>
+                      <p className="text-sm text-gray-800">{p.kritik_saran}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
+
 
       {isEditCostModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">

@@ -19,6 +19,8 @@ export default function PublicFunminton() {
   // Form
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [file, setFile] = useState<File | null>(null);
+  const [kritikSaran, setKritikSaran] = useState('');
+  const [pollingHari, setPollingHari] = useState<'jumat_malam' | 'sabtu_pagi' | ''>('');
 
   useEffect(() => {
     async function loadData() {
@@ -127,7 +129,9 @@ export default function PublicFunminton() {
         payment_proof_url: publicUrl,
         ocr_raw: ocrResult,
         ocr_match: true,
-        submitted_at: new Date().toISOString()
+        submitted_at: new Date().toISOString(),
+        kritik_saran: kritikSaran || null,
+        polling_hari: pollingHari || null
       }));
 
       for (const update of updates) {
@@ -247,6 +251,37 @@ export default function PublicFunminton() {
               </div>
               <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*" onChange={e => setFile(e.target.files?.[0] || null)} />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Minggu depan mau minton kapan?</label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="polling_hari" value="jumat_malam"
+                  checked={pollingHari === 'jumat_malam'}
+                  onChange={() => setPollingHari('jumat_malam')}
+                  className="accent-primary-green w-4 h-4" />
+                <span className="text-sm text-gray-700">Jumat Malam</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="polling_hari" value="sabtu_pagi"
+                  checked={pollingHari === 'sabtu_pagi'}
+                  onChange={() => setPollingHari('sabtu_pagi')}
+                  className="accent-primary-green w-4 h-4" />
+                <span className="text-sm text-gray-700">Sabtu Pagi</span>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Kritik dan Saran <span className="text-gray-400 font-normal">(opsional)</span></label>
+            <textarea
+              placeholder="Kasih saran biar next minton tambah fun"
+              className="w-full px-3 py-2 border rounded-xl text-sm resize-none"
+              rows={3}
+              value={kritikSaran}
+              onChange={e => setKritikSaran(e.target.value)}
+            />
           </div>
 
           <button

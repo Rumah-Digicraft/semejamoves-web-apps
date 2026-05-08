@@ -46,6 +46,8 @@ export interface Participant {
   ocr_raw: any | null;
   ocr_match: boolean | null;
   submitted_at: string | null;
+  kritik_saran: string | null;
+  polling_hari: 'jumat_malam' | 'sabtu_pagi' | null;
   created_at: string;
 }
 
