@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { analyzePaymentProof } from '../lib/gemini';
 import type { Session, Participant } from '../types';
 import { formatCurrency, formatDate } from '../utils/format';
-import { Activity, Upload, CheckCircle2, X, Download } from 'lucide-react';
+import { Activity, Upload, Download } from 'lucide-react';
 import qrisImage from '../assets/qris.jpeg';
 
 export default function PublicFunminton() {
@@ -153,11 +153,9 @@ export default function PublicFunminton() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white p-8 rounded-2xl shadow-xl text-center max-w-md w-full">
-          <div className="w-16 h-16 bg-green-100 text-primary-green rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle2 size={32} />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Terima Kasih!</h2>
-          <p className="text-gray-500">Bukti pembayaran berhasil dikirim. Anda bisa menutup halaman ini.</p>
+          <div className="text-5xl mb-4">🏸✅</div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Slay! Bayarnya valid bestie!</h2>
+          <p className="text-gray-500 text-sm">Transfernya udah ke-detect, status udah auto approved. See you di lapangan minggu depan 🔥</p>
         </div>
       </div>
     );
@@ -181,8 +179,8 @@ export default function PublicFunminton() {
             <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
               <div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl flex flex-col items-center">
                 <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-primary-green mb-6"></div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Memproses Pembayaran</h3>
-                <p className="text-gray-500 text-sm">Sedang memverifikasi bukti transfer Anda menggunakan AI. Mohon tunggu sebentar...</p>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Sabar bestie... 🤙</h3>
+                <p className="text-gray-500 text-sm">AI lagi ngecek bukti tf mu, bentar lagi kok. jangan kemana-mana dulu ya teman semeja ✨</p>
               </div>
             </div>
           )}
@@ -190,17 +188,15 @@ export default function PublicFunminton() {
           {errorMsg && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
               <div className="bg-white rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl">
-                <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <X size={32} />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Gagal Verifikasi</h3>
+                <div className="text-5xl mb-4">😭💀</div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Aduh, AI-nya ga percaya nih... Coba lagi yuk</h3>
                 <p className="text-gray-600 text-sm mb-6">{errorMsg}</p>
                 <button
                   type="button"
                   onClick={() => setErrorMsg('')}
                   className="w-full bg-gray-900 text-white py-2.5 rounded-xl font-medium hover:bg-gray-800 transition-colors"
                 >
-                  Tutup & Coba Lagi
+                  Coba lagi deh 🔄
                 </button>
               </div>
             </div>
