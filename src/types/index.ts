@@ -10,10 +10,16 @@ export interface SportConfig {
   color: string;
 }
 
+export interface SessionSlot {
+  time: string;
+  courts: string;
+}
+
 export interface Session {
   id: string;
   sport_type: SportType;
   session_date: string;
+  session_slots: SessionSlot[] | null;
   venue: string;
   max_participants: number;
   price_per_person: number;

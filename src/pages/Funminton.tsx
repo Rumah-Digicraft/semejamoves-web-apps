@@ -1,10 +1,21 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, MapPin, Users, Copy, Check } from 'lucide-react';
+import { Plus, MapPin, Users, Copy, Check, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Session } from '../types';
 import { formatDate } from '../utils/format';
 import CurrencyInput from '../components/CurrencyInput';
+
+const defaultFormData = {
+  session_date: '',
+  venue: '',
+  max_participants: 24,
+  price_per_person: 15000,
+  court_cost: 0,
+  other_cost: 0,
+  other_cost_description: '',
+  notes: ''
+};
 
 export default function Funminton() {
   const [sessions, setSessions] = useState<(Session & { participants: any[] })[]>([]);
@@ -12,17 +23,8 @@ export default function Funminton() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
 
-  // Form State
-  const [formData, setFormData] = useState({
-    session_date: '',
-    venue: '',
-    max_participants: 24,
-    price_per_person: 15000,
-    court_cost: 0,
-    other_cost: 0,
-    other_cost_description: '',
-    notes: ''
-  });
+  const [formData, setFormData] = useState(defaultFormData);
+  const [sessionSlots, setSessionSlots] = useState([{ time: '', courts: '' }]);
 
   const loadSessions = async () => {
     const { data, error } = await supabase
@@ -41,26 +43,26 @@ export default function Funminton() {
     loadSessions();
   }, []);
 
-  const handleCreateSession = async (e: React.FormEvent) => {
+  const addSlot = () => setSessionSlots(prev => [...prev, { time: '', courts: '' }]);
+  const removeSlot = (i: number) => setSessionSlots(prev => prev.filter((_, idx) => idx !== i));
+  const updateSlot = (i: number, field: 'time' | 'courts', value: string) => {
+    setSessionSlots(prev => prev.map((s, idx) => idx === i ? { ...s, [field]: value } : s));
+  };
+
+  const handleCreateSession = async (e: { preventDefault(): void }) => {
     e.preventDefault();
+    const slots = sessionSlots.filter(s => s.time || s.courts);
     const { error } = await supabase.from('sessions').insert({
       sport_type: 'funminton',
-      ...formData
+      ...formData,
+      session_slots: slots.length > 0 ? slots : null
     });
 
     if (!error) {
       setIsModalOpen(false);
       loadSessions();
-      setFormData({
-        session_date: '',
-        venue: '',
-        max_participants: 24,
-        price_per_person: 15000,
-        court_cost: 0,
-        other_cost: 0,
-        other_cost_description: '',
-        notes: ''
-      });
+      setFormData(defaultFormData);
+      setSessionSlots([{ time: '', courts: '' }]);
     } else {
       alert('Gagal membuat sesi: ' + error.message);
     }
@@ -95,7 +97,7 @@ export default function Funminton() {
         {sessions.map(session => {
           const totalParticipants = session.participants?.length || 0;
           const paidParticipants = session.participants?.filter(p => p.payment_status === 'approved').length || 0;
-          
+
           return (
             <div key={session.id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
               <div className="flex justify-between items-start mb-4">
@@ -105,8 +107,8 @@ export default function Funminton() {
                 }`}>
                   {session.status.toUpperCase()}
                 </span>
-                
-                <button 
+
+                <button
                   onClick={(e) => { e.preventDefault(); copyLink(session.token); }}
                   className="text-gray-400 hover:text-primary-purple transition-colors p-2 rounded-lg hover:bg-purple-50"
                   title="Copy Public Form Link"
@@ -119,7 +121,7 @@ export default function Funminton() {
                 <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-primary-purple transition-colors">
                   {formatDate(session.session_date)}
                 </h3>
-                
+
                 <div className="space-y-2 mb-6">
                   <div className="flex items-center text-gray-500 text-sm gap-2">
                     <MapPin size={16} />
@@ -137,8 +139,8 @@ export default function Funminton() {
                     <span className="font-medium text-gray-900">{paidParticipants} / {totalParticipants} Lunas</span>
                   </div>
                   <div className="w-full bg-gray-100 rounded-full h-2 mt-2">
-                    <div 
-                      className="bg-primary-green h-2 rounded-full transition-all" 
+                    <div
+                      className="bg-primary-green h-2 rounded-full transition-all"
                       style={{ width: `${totalParticipants > 0 ? (paidParticipants / totalParticipants) * 100 : 0}%` }}
                     ></div>
                   </div>
@@ -163,20 +165,48 @@ export default function Funminton() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Tanggal</label>
-                  <input type="date" required className="w-full px-3 py-2 border rounded-xl" 
+                  <input type="date" required className="w-full px-3 py-2 border rounded-xl"
                     value={formData.session_date} onChange={e => setFormData({...formData, session_date: e.target.value})} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Venue</label>
-                  <input type="text" required placeholder="Nama GOR" className="w-full px-3 py-2 border rounded-xl" 
+                  <input type="text" required placeholder="Nama GOR" className="w-full px-3 py-2 border rounded-xl"
                     value={formData.venue} onChange={e => setFormData({...formData, venue: e.target.value})} />
                 </div>
               </div>
-              
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700">Jadwal & Lapangan</label>
+                  <button type="button" onClick={addSlot}
+                    className="text-xs text-primary-green font-medium flex items-center gap-1 hover:opacity-80">
+                    <Plus size={13} /> Tambah Slot
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {sessionSlots.map((slot, i) => (
+                    <div key={i} className="flex gap-2 items-center">
+                      <input type="text" placeholder="19.00–21.00"
+                        className="w-32 flex-shrink-0 px-3 py-2 border rounded-xl text-sm"
+                        value={slot.time} onChange={e => updateSlot(i, 'time', e.target.value)} />
+                      <input type="text" placeholder="Lapangan 1 & 5"
+                        className="flex-1 px-3 py-2 border rounded-xl text-sm"
+                        value={slot.courts} onChange={e => updateSlot(i, 'courts', e.target.value)} />
+                      {sessionSlots.length > 1 && (
+                        <button type="button" onClick={() => removeSlot(i)}
+                          className="text-gray-400 hover:text-red-500 p-1 flex-shrink-0">
+                          <X size={16} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Maks Peserta</label>
-                  <input type="number" required className="w-full px-3 py-2 border rounded-xl" 
+                  <input type="number" required className="w-full px-3 py-2 border rounded-xl"
                     value={formData.max_participants} onChange={e => setFormData({...formData, max_participants: Number(e.target.value)})} />
                 </div>
                 <div>
@@ -197,7 +227,7 @@ export default function Funminton() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Ket. Biaya Lain</label>
-                  <input type="text" placeholder="Kok, minum, dll" className="w-full px-3 py-2 border rounded-xl" 
+                  <input type="text" placeholder="Kok, minum, dll" className="w-full px-3 py-2 border rounded-xl"
                     value={formData.other_cost_description} onChange={e => setFormData({...formData, other_cost_description: e.target.value})} />
                 </div>
               </div>
@@ -211,16 +241,8 @@ export default function Funminton() {
               <div className="flex gap-3 justify-end pt-4">
                 <button type="button" onClick={() => {
                   setIsModalOpen(false);
-                  setFormData({
-                    session_date: '',
-                    venue: '',
-                    max_participants: 24,
-                    price_per_person: 15000,
-                    court_cost: 0,
-                    other_cost: 0,
-                    other_cost_description: '',
-                    notes: ''
-                  });
+                  setFormData(defaultFormData);
+                  setSessionSlots([{ time: '', courts: '' }]);
                 }} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-xl">Batal</button>
                 <button type="submit" className="px-6 py-2 bg-primary-green text-white rounded-xl hover:bg-opacity-90">Simpan Sesi</button>
               </div>
