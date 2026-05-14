@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { analyzePaymentProof } from '../lib/gemini';
 import type { Session, Participant } from '../types';
 import { formatCurrency, formatDate } from '../utils/format';
-import { Activity, Upload, Download } from 'lucide-react';
+import { Activity, Upload, Download, X } from 'lucide-react';
 import qrisImage from '../assets/qris.jpeg';
 
 export default function PublicFunminton() {
@@ -20,6 +20,7 @@ export default function PublicFunminton() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [kritikSaran, setKritikSaran] = useState('');
+  const [pollingAnswer, setPollingAnswer] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -55,12 +56,23 @@ export default function PublicFunminton() {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
 
-  const toBase64 = (f: File) => new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(f);
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = error => reject(error);
-  });
+  const compressImage = (f: File, maxPx = 1024, quality = 0.82): Promise<{ base64: string; mimeType: string }> =>
+    new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(f);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        resolve({ base64: dataUrl.split(',')[1], mimeType: 'image/jpeg' });
+      };
+      img.onerror = reject;
+      img.src = url;
+    });
 
   const handleSubmit = async (e: { preventDefault(): void }) => {
     e.preventDefault();
@@ -73,11 +85,8 @@ export default function PublicFunminton() {
     setErrorMsg('');
 
     try {
-      // 1. Convert to Base64 and run OCR with Gemini
-      const base64DataUrl = await toBase64(file);
-      const base64Content = base64DataUrl.split(',')[1];
-      const mimeType = file.type;
-      
+      // 1. Compress then run OCR with Gemini
+      const { base64: base64Content, mimeType } = await compressImage(file);
       const ocrResult = await analyzePaymentProof(base64Content, mimeType);
       
       // 2. Logic Auto-Approve Match
@@ -130,7 +139,7 @@ export default function PublicFunminton() {
         ocr_match: true,
         submitted_at: new Date().toISOString(),
         kritik_saran: kritikSaran || null,
-        polling_hari: null
+        polling_hari: pollingAnswer
       }));
 
       for (const update of updates) {
@@ -233,27 +242,73 @@ export default function PublicFunminton() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Upload Bukti Transfer (QRIS/Bank)</label>
-            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl hover:border-primary-green transition-colors bg-gray-50 cursor-pointer relative">
-              <div className="space-y-1 text-center">
-                <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                <div className="flex text-sm text-gray-600 justify-center">
-                  <span className="relative rounded-md font-medium text-primary-green focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-green">
-                    <span>Upload foto</span>
-                    <input type="file" className="sr-only" accept="image/*" onChange={e => setFile(e.target.files?.[0] || null)} />
-                  </span>
+            {file ? (
+              <div className="flex items-center gap-3 p-4 bg-green-50 border-2 border-green-300 rounded-xl">
+                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Upload className="w-5 h-5 text-green-600" />
                 </div>
-                <p className="text-xs text-gray-500">{file ? file.name : 'PNG, JPG up to 5MB'}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-green-700 truncate">{file.name}</p>
+                  <p className="text-xs text-green-600">{(file.size / 1024).toFixed(0)} KB — siap diupload</p>
+                </div>
+                <button type="button" onClick={() => setFile(null)} className="text-green-500 hover:text-red-500 p-1 flex-shrink-0 transition-colors">
+                  <X size={18} />
+                </button>
               </div>
-              <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*" onChange={e => setFile(e.target.files?.[0] || null)} />
-            </div>
+            ) : (
+              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl hover:border-primary-green transition-colors bg-gray-50 cursor-pointer relative">
+                <div className="space-y-1 text-center">
+                  <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                  <div className="flex text-sm text-gray-600 justify-center">
+                    <span className="relative rounded-md font-medium text-primary-green">
+                      <span>Upload foto</span>
+                      <input type="file" className="sr-only" accept="image/*" onChange={e => setFile(e.target.files?.[0] || null)} />
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500">PNG, JPG up to 5MB</p>
+                </div>
+                <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*" onChange={e => setFile(e.target.files?.[0] || null)} />
+              </div>
+            )}
           </div>
 
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-4">
-            <p className="text-xs font-semibold text-green-600 uppercase tracking-wide mb-1">📢 Next Session</p>
-            <p className="text-base font-bold text-gray-900">Funminton Malam Minggu 🏸✨</p>
-            <p className="text-sm text-gray-600 mt-0.5">Sabtu, 16 Mei 2026</p>
-            <p className="text-xs text-green-700 mt-2 font-medium">no cap minggu depan kita minton lagi bestie, jangan ghosting ya fr fr 🔥</p>
-          </div>
+          {session.announcement_config?.enabled && (
+            session.announcement_config.type === 'libur' ? (
+              <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-2xl p-4">
+                <p className="text-xs font-semibold text-red-500 uppercase tracking-wide mb-1">🚫 Pengumuman</p>
+                <p className="text-base font-bold text-gray-900">{session.announcement_config.title}</p>
+                {session.announcement_config.caption && <p className="text-xs text-red-700 mt-2 font-medium">{session.announcement_config.caption}</p>}
+              </div>
+            ) : (
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-4">
+                <p className="text-xs font-semibold text-green-600 uppercase tracking-wide mb-1">📢 Next Session</p>
+                <p className="text-base font-bold text-gray-900">{session.announcement_config.title}</p>
+                {session.announcement_config.date && <p className="text-sm text-gray-600 mt-0.5">{session.announcement_config.date}</p>}
+                {session.announcement_config.caption && <p className="text-xs text-green-700 mt-2 font-medium">{session.announcement_config.caption}</p>}
+              </div>
+            )
+          )}
+
+          {session.polling_config?.enabled && (
+            <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 space-y-3">
+              <p className="text-sm font-semibold text-gray-800">{session.polling_config.question}</p>
+              <div className="space-y-2">
+                {session.polling_config.options.map(opt => (
+                  <label key={opt} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${pollingAnswer === opt ? 'bg-white border-primary-green shadow-sm' : 'bg-white/60 border-transparent hover:bg-white'}`}>
+                    <input
+                      type="radio"
+                      name="polling"
+                      value={opt}
+                      checked={pollingAnswer === opt}
+                      onChange={() => setPollingAnswer(opt)}
+                      className="w-4 h-4 text-primary-green"
+                    />
+                    <span className="text-sm text-gray-800 font-medium">{opt}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Kritik dan Saran <span className="text-gray-400 font-normal">(opsional)</span></label>

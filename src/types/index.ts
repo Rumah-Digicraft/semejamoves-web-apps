@@ -15,6 +15,20 @@ export interface SessionSlot {
   courts: string;
 }
 
+export interface PollingConfig {
+  enabled: boolean;
+  question: string;
+  options: string[];
+}
+
+export interface AnnouncementConfig {
+  enabled: boolean;
+  type: 'next_session' | 'libur' | 'custom';
+  title: string;
+  date: string;
+  caption: string;
+}
+
 export interface Session {
   id: string;
   sport_type: SportType;
@@ -29,6 +43,8 @@ export interface Session {
   notes: string | null;
   token: string;
   status: 'open' | 'closed' | 'done';
+  polling_config: PollingConfig | null;
+  announcement_config: AnnouncementConfig | null;
   created_at: string;
   sports_config?: SportConfig;
 }
@@ -47,7 +63,7 @@ export interface Participant {
   ocr_match: boolean | null;
   submitted_at: string | null;
   kritik_saran: string | null;
-  polling_hari: 'jumat_malam' | 'sabtu_pagi' | null;
+  polling_hari: string | null;
   created_at: string;
 }
 
