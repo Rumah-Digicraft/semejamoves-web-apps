@@ -275,7 +275,7 @@ export default function PublicFunminton() {
           {session.announcement_config?.enabled && (
             session.announcement_config.type === 'libur' ? (
               <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-2xl p-4">
-                <p className="text-xs font-semibold text-red-500 uppercase tracking-wide mb-1">🚫 Pengumuman</p>
+                <p className="text-xs font-semibold text-red-500 uppercase tracking-wide mb-1">🔊 Pengumuman</p>
                 <p className="text-base font-bold text-gray-900">{session.announcement_config.title}</p>
                 {session.announcement_config.caption && <p className="text-xs text-red-700 mt-2 font-medium">{session.announcement_config.caption}</p>}
               </div>
