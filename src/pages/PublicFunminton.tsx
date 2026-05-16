@@ -13,7 +13,7 @@ export default function PublicFunminton() {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [success, setSuccess] = useState<'approved' | 'pending' | false>(false);
   const [errorMsg, setErrorMsg] = useState('');
 
   // Form
@@ -109,11 +109,7 @@ export default function PublicFunminton() {
         }
       }
 
-      if (!isMatch) {
-        throw new Error('Bukti pembayaran tidak sesuai (Nominal/Tanggal). Silakan hubungi Pengurus (Afif, Ghafar, atau Ilham) untuk konfirmasi manual.');
-      }
-
-      // 3. Upload file to Supabase Storage ONLY IF MATCH
+      // 3. Upload file regardless of OCR result
       const fileExt = file.name.split('.').pop();
       const fileName = `${session.id}/${Date.now()}.${fileExt}`;
       const { error: uploadError } = await supabase.storage
@@ -126,17 +122,17 @@ export default function PublicFunminton() {
         .from('payment-proofs')
         .getPublicUrl(fileName);
 
-      // 4. Update participants (all are approved since isMatch is true)
+      // 4. Update participants — approved if match, pending (flagged) if not
       const updates = selectedIds.map(id => ({
         id,
         session_id: session.id,
-        payment_status: 'approved',
-        attended: true,
-        payment_amount: ocrResult?.nominal || expectedTotal,
+        payment_status: isMatch ? 'approved' : 'pending',
+        attended: isMatch ? true : undefined,
+        payment_amount: ocrResult?.nominal || null,
         payment_date: ocrResult?.tanggal || new Date().toISOString().split('T')[0],
         payment_proof_url: publicUrl,
         ocr_raw: ocrResult,
-        ocr_match: true,
+        ocr_match: isMatch,
         submitted_at: new Date().toISOString(),
         kritik_saran: kritikSaran || null,
         polling_hari: pollingAnswer
@@ -146,7 +142,7 @@ export default function PublicFunminton() {
         await supabase.from('participants').update(update).eq('id', update.id);
       }
 
-      setSuccess(true);
+      setSuccess(isMatch ? 'approved' : 'pending');
     } catch (err: any) {
       setErrorMsg(err.message || 'Terjadi kesalahan sistem.');
     } finally {
@@ -162,9 +158,19 @@ export default function PublicFunminton() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white p-8 rounded-2xl shadow-xl text-center max-w-md w-full">
-          <div className="text-5xl mb-4">🏸✅</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Slay! Bayarnya valid bestie!</h2>
-          <p className="text-gray-500 text-sm">Transfernya udah ke-detect, status udah auto approved. See you di lapangan minggu depan 🔥</p>
+          {success === 'approved' ? (
+            <>
+              <div className="text-5xl mb-4">🏸✅</div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Slay! Bayarnya valid bestie!</h2>
+              <p className="text-gray-500 text-sm">Transfernya udah ke-detect, status udah auto approved. See you di lapangan minggu depan 🔥</p>
+            </>
+          ) : (
+            <>
+              <div className="text-5xl mb-4">📨</div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Bukti sudah masuk!</h2>
+              <p className="text-gray-500 text-sm">Bukti TF-mu udah ke-upload ya, tapi perlu konfirmasi manual sama admin dulu. Hubungi Afif, Ghafar, atau Ilham buat konfirmasi pembayarannya 🙏</p>
+            </>
+          )}
         </div>
       </div>
     );
