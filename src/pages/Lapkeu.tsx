@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import type { CashflowEntry, Session } from '../types';
 import { formatCurrency, formatDate } from '../utils/format';
-import { Wallet, TrendingUp, TrendingDown, Activity, Plus } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, Activity, Plus, Trash2 } from 'lucide-react';
 import CurrencyInput from '../components/CurrencyInput';
 
 export default function Lapkeu() {
@@ -47,6 +47,14 @@ export default function Lapkeu() {
     setLoading(true);
     loadData();
   }, [activeTab]);
+
+  const handleDeleteEntry = async (id: string, source: string) => {
+    if (source === 'auto' && !window.confirm('Entry ini dibuat otomatis dari sesi. Tetap hapus?')) return;
+    if (source === 'manual' && !window.confirm('Hapus transaksi ini?')) return;
+    const { error } = await supabase.from('cashflow_entries').delete().eq('id', id);
+    if (error) { alert('Gagal hapus: ' + error.message); return; }
+    loadData();
+  };
 
   const handleAddEntry = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -198,6 +206,7 @@ export default function Lapkeu() {
                 <th className="p-4 font-medium text-right">Masuk</th>
                 <th className="p-4 font-medium text-right">Keluar</th>
                 <th className="p-4 font-medium text-right">Saldo</th>
+                <th className="p-4 font-medium"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -234,6 +243,11 @@ export default function Lapkeu() {
                     </td>
                     <td className="p-4 text-right font-bold text-gray-900">
                       {formatCurrency(entry.balance)}
+                    </td>
+                    <td className="p-4">
+                      <button onClick={() => handleDeleteEntry(entry.id, entry.source)} className="text-red-400 hover:text-red-600 p-1 rounded-md hover:bg-red-50" title="Hapus entry">
+                        <Trash2 size={15} />
+                      </button>
                     </td>
                   </tr>
                 );

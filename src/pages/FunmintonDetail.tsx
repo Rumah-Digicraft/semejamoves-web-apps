@@ -155,7 +155,8 @@ export default function FunmintonDetail() {
 
   const deleteParticipant = async (participantId: string) => {
     if (!window.confirm('Hapus peserta ini?')) return;
-    await supabase.from('participants').delete().eq('id', participantId);
+    const { error } = await supabase.from('participants').delete().eq('id', participantId);
+    if (error) { alert('Gagal hapus peserta: ' + error.message); return; }
     loadData();
   };
 
@@ -189,9 +190,16 @@ export default function FunmintonDetail() {
   const deleteSession = async () => {
     if (!id) return;
     if (!window.confirm('Yakin ingin menghapus sesi ini beserta seluruh pesertanya? Tindakan ini tidak dapat dibatalkan.')) return;
-    
-    await supabase.from('participants').delete().eq('session_id', id);
-    await supabase.from('sessions').delete().eq('id', id);
+
+    const { error: e1 } = await supabase.from('cashflow_entries').delete().eq('session_id', id);
+    if (e1) { alert('Gagal hapus cashflow: ' + e1.message); return; }
+
+    const { error: e2 } = await supabase.from('participants').delete().eq('session_id', id);
+    if (e2) { alert('Gagal hapus peserta: ' + e2.message); return; }
+
+    const { error: e3 } = await supabase.from('sessions').delete().eq('id', id);
+    if (e3) { alert('Gagal hapus sesi: ' + e3.message); return; }
+
     navigate('/funminton');
   };
 
