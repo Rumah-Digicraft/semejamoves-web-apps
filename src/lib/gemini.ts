@@ -30,26 +30,34 @@ export async function analyzePaymentProof(base64Image: string, mimeType: string)
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: PROMPT }, { inlineData: { mimeType, data: base64Image } }] }],
-        generationConfig: { maxOutputTokens: 64, temperature: 0 }
+        generationConfig: { maxOutputTokens: 1024, temperature: 0, thinkingConfig: { thinkingBudget: 0 } }
       })
     });
 
     const data = await response.json();
 
     if (data.error) {
-      console.error('Gemini API Error:', data.error);
+      console.error('[OCR] Gemini API error:', data.error);
       return null;
     }
 
-    let text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
-    if (!text) return null;
+    // Gemini 2.5 may return multiple parts (thinking + answer) — grab all text and find JSON
+    const parts = data.candidates?.[0]?.content?.parts ?? [];
+    const allText = parts.map((p: any) => p.text ?? '').join('');
 
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) text = jsonMatch[0];
+    console.log('[OCR] Raw response:', allText);
 
-    return JSON.parse(text);
+    const jsonMatch = allText.match(/\{[\s\S]*?\}/);
+    if (!jsonMatch) {
+      console.warn('[OCR] No JSON found in response');
+      return null;
+    }
+
+    const parsed = JSON.parse(jsonMatch[0]);
+    console.log('[OCR] Parsed:', parsed);
+    return parsed;
   } catch (error: any) {
-    console.error('Gemini OCR Exception:', error);
+    console.error('[OCR] Exception:', error);
     return null;
   }
 }

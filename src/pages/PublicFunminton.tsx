@@ -94,17 +94,7 @@ export default function PublicFunminton() {
       let isMatch = false;
       
       if (ocrResult && typeof ocrResult.nominal === 'number') {
-        const sessionDate = new Date(session.session_date);
-        const ocrDate = ocrResult.tanggal ? new Date(ocrResult.tanggal) : null;
-        
-        let dateValid = false;
-        if (ocrDate) {
-          const diffTime = Math.abs(ocrDate.getTime() - sessionDate.getTime());
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-          dateValid = diffDays <= 1; // within 1 day
-        }
-
-        if (ocrResult.nominal === expectedTotal && dateValid) {
+        if (ocrResult.nominal === expectedTotal) {
           isMatch = true;
         }
       }
